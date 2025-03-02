@@ -67,12 +67,51 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         databaseHelper = new DatabaseHelper(this);
+        int mode = databaseHelper.getMode();
+        updateUI(mode);
+
+        autoBtn.setOnClickListener(v -> {
+            databaseHelper.updateMode(1); // Set mode to Auto in database
+            processReceivedData(databaseHelper.getHumidityData()); // Fetch latest data & update UI
+        });
+
+        manualBtn.setOnClickListener(v -> {
+            databaseHelper.updateMode(0); // Set mode to Manual in database
+            processReceivedData(databaseHelper.getHumidityData()); // Fetch latest data & update UI
+        });
+
+
+
+
         // Fetch data from database
 //        humidityData = databaseHelper.getHumidityData();
 //        dataTextView.setText(humidityData);
 
         exeButton();
     }
+
+    private void updateUI(int mode) {
+        if (mode == 1) { // Automatic Mode
+            autoBtn.setBackgroundColor(Color.GREEN);
+            manualBtn.setBackgroundColor(Color.GRAY);
+
+            fanStatusBtn.setEnabled(false);
+            mistStatusBtn.setEnabled(false);
+            ledStatusBtn.setEnabled(false);
+
+            Toast.makeText(MainActivity.this, "AUTOMATIC MODE ON", Toast.LENGTH_SHORT).show();
+        } else { // Manual Mode
+            autoBtn.setBackgroundColor(Color.GRAY);
+            manualBtn.setBackgroundColor(Color.GREEN);
+
+            fanStatusBtn.setEnabled(true);
+            mistStatusBtn.setEnabled(true);
+            ledStatusBtn.setEnabled(true);
+
+            Toast.makeText(MainActivity.this, "MANUAL MODE ON", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private void exeButton() {
 
@@ -86,61 +125,98 @@ public class MainActivity extends AppCompatActivity {
         if (data.startsWith("$MIST")) {
             String[] parts = data.split(",");
             if (parts.length == 7) {
-                String temperature = parts[1].trim();
-                String humidity = parts[2].trim();
+                int mode = Integer.parseInt(parts[6].trim()); // Extract mode from last value
                 boolean fanStatus = parts[3].trim().equals("1");
                 boolean mistStatus = parts[4].trim().equals("1");
                 boolean ledStatus = parts[5].trim().equals("1");
-                boolean isAutoMode = parts[6].trim().equals("1");
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "RUN", Toast.LENGTH_SHORT).show();
-
-                        tempValueTV.setText(temperature);
-                        humidityValueTV.setText(humidity);
-
-                        if (isAutoMode) {
-                            Toast.makeText(MainActivity.this, "AUTOMATIC MODE ON", Toast.LENGTH_SHORT).show();
-                            autoBtn.setBackgroundColor(Color.GREEN);
-                            manualBtn.setBackgroundColor(Color.GRAY);
-
-                            fanStatusBtn.setEnabled(false);
-                            mistStatusBtn.setEnabled(false);
-                            ledStatusBtn.setEnabled(false);
-
-                            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
-                            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
-                            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
-
-                        }
-                        else {
-                            Toast.makeText(MainActivity.this, "MANUAL MODE ON", Toast.LENGTH_SHORT).show();
-                            autoBtn.setBackgroundColor(Color.GRAY);
-                            manualBtn.setBackgroundColor(Color.GREEN);
-
-                            fanStatusBtn.setEnabled(true);
-                            mistStatusBtn.setEnabled(true);
-                            ledStatusBtn.setEnabled(true);
-
-                            fanStatusBtn.setBackgroundColor(fanStatus ? Color.GREEN : Color.RED);
-                            fanStatusBtn.setText(fanStatus ? "ON" : "OFF");
-                            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
-
-                            mistStatusBtn.setBackgroundColor(mistStatus ? Color.GREEN : Color.RED);
-                            mistStatusBtn.setText(mistStatus ? "ON" : "OFF");
-                            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
-
-                            ledStatusBtn.setBackgroundColor(ledStatus ? Color.GREEN : Color.RED);
-                            ledStatusBtn.setText(ledStatus ? "ON" : "OFF");
-                            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
-                        }
-                    }
+                runOnUiThread(() -> {
+                    updateUI(mode); // Call updateUI to set button enable/disable
+                    updateDeviceStatus(fanStatus, mistStatus, ledStatus); // Update button images and text
                 });
             }
         }
     }
+
+    private void updateDeviceStatus(boolean fanStatus, boolean mistStatus, boolean ledStatus) {
+        fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button : R.drawable.off_button);
+        mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button);
+        ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button);
+
+        // Only update text and color in Manual Mode
+        if (manualBtn.getCurrentTextColor() == Color.GREEN) {
+            fanStatusBtn.setBackgroundColor(fanStatus ? Color.GREEN : Color.RED);
+            fanStatusBtn.setText(fanStatus ? "ON" : "OFF");
+
+            mistStatusBtn.setBackgroundColor(mistStatus ? Color.GREEN : Color.RED);
+            mistStatusBtn.setText(mistStatus ? "ON" : "OFF");
+
+            ledStatusBtn.setBackgroundColor(ledStatus ? Color.GREEN : Color.RED);
+            ledStatusBtn.setText(ledStatus ? "ON" : "OFF");
+        }
+    }
+
+
+
+//    private void processReceivedData(String data) {
+//        if (data.startsWith("$MIST")) {
+//            String[] parts = data.split(",");
+//            if (parts.length == 7) {
+//                String temperature = parts[1].trim();
+//                String humidity = parts[2].trim();
+//                boolean fanStatus = parts[3].trim().equals("1");
+//                boolean mistStatus = parts[4].trim().equals("1");
+//                boolean ledStatus = parts[5].trim().equals("1");
+//                boolean isAutoMode = parts[6].trim().equals("1");
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(MainActivity.this, "RUN", Toast.LENGTH_SHORT).show();
+//
+//                        tempValueTV.setText(temperature);
+//                        humidityValueTV.setText(humidity);
+//
+//                        if (isAutoMode) {
+//                            Toast.makeText(MainActivity.this, "AUTOMATIC MODE ON", Toast.LENGTH_SHORT).show();
+//                            autoBtn.setBackgroundColor(Color.GREEN);
+//                            manualBtn.setBackgroundColor(Color.GRAY);
+//
+//                            fanStatusBtn.setEnabled(false);
+//                            mistStatusBtn.setEnabled(false);
+//                            ledStatusBtn.setEnabled(false);
+//
+//                            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
+//                            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
+//                            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
+//
+//                        }
+//                        else {
+//                            Toast.makeText(MainActivity.this, "MANUAL MODE ON", Toast.LENGTH_SHORT).show();
+//                            autoBtn.setBackgroundColor(Color.GRAY);
+//                            manualBtn.setBackgroundColor(Color.GREEN);
+//
+//                            fanStatusBtn.setEnabled(true);
+//                            mistStatusBtn.setEnabled(true);
+//                            ledStatusBtn.setEnabled(true);
+//
+//                            fanStatusBtn.setBackgroundColor(fanStatus ? Color.GREEN : Color.RED);
+//                            fanStatusBtn.setText(fanStatus ? "ON" : "OFF");
+//                            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
+//
+//                            mistStatusBtn.setBackgroundColor(mistStatus ? Color.GREEN : Color.RED);
+//                            mistStatusBtn.setText(mistStatus ? "ON" : "OFF");
+//                            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
+//
+//                            ledStatusBtn.setBackgroundColor(ledStatus ? Color.GREEN : Color.RED);
+//                            ledStatusBtn.setText(ledStatus ? "ON" : "OFF");
+//                            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
+//                        }
+//                    }
+//                });
+//            }
+//        }
+//    }
 
 
 

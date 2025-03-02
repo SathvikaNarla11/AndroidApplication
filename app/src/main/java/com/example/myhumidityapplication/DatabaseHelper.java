@@ -78,4 +78,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return dataString;
     }
+
+    // Fetch Mode from Database
+    public int getMode() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT mode FROM " + TABLE_NAME + " LIMIT 1", null);
+        int mode = 0; // Default to manual
+
+        if (cursor.moveToFirst()) {
+            mode = cursor.getInt(0);
+        }
+        cursor.close();
+        db.close();
+        return mode;
+    }
+
+    // Update Mode in Database
+    public void updateMode(int newMode) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("mode", newMode);
+        db.update(TABLE_NAME, values, null, null);
+        db.close();
+    }
 }
