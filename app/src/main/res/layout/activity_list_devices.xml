@@ -35,7 +35,7 @@
 
 
     <TextView
-        android:id="@+id/ConnectDevice"
+        android:id="@+id/tvConnectDevice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,19 +48,30 @@
         android:visibility="visible"
         />
 
+
+<!--    <Button-->
+<!--        android:id="@+id/ConnectDevice"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Connect"-->
+<!--        tools:layout_editor_absoluteX="204dp"-->
+<!--        tools:layout_editor_absoluteY="132dp" />-->
+
     <TextView
         android:id="@+id/AvailableDevice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ConnectDevice"
         android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:textAlignment="center"
+        android:layout_marginBottom="516dp"
         android:text="Available Device:"
+        android:textAlignment="center"
         android:textSize="20sp"
         android:visibility="visible"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.065"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/connectDevice" />
 
     <Button
         android:layout_width="wrap_content"
@@ -77,43 +88,44 @@
         />
 
     <Button
+        android:id="@+id/disconnectDevice"
         android:layout_width="wrap_content"
         android:layout_height="35dp"
+        android:layout_marginTop="44dp"
+        android:layout_marginEnd="112dp"
         android:text=" Disconnect "
         android:textColor="#FFFFFF"
         android:textSize="12sp"
-        android:id="@+id/disconnectDevice"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="5dp"
-        android:layout_marginTop="10dp"
-        android:visibility="visible"/>
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <Button
+        android:id="@+id/StopScanButton"
         android:layout_width="wrap_content"
         android:layout_height="35dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="104dp"
         android:text=" Stop Scanning "
         android:textColor="#FFFFFF"
         android:textSize="12sp"
-        android:id="@+id/StopScanButton"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="5dp"
-        android:layout_marginTop="10dp"
-        android:visibility="visible"/>
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <ListView
         android:id="@+id/listView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintTop_toBottomOf="@+id/AvailableDevice"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginTop="200dp"
-        android:layout_marginBottom="40dp"
+        android:layout_width="383dp"
+        android:layout_height="350dp"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="200dp"
         android:visibility="visible"
-        >
-    </ListView>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.428"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"></ListView>
 
     <Button
         android:id="@+id/btnBack"
@@ -127,7 +139,40 @@
         app:layout_constraintHorizontal_bias="0.916"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.188" />
+        app:layout_constraintVertical_bias="0.168" />
+
+    <Button
+        android:id="@+id/connectDeviceBtn"
+        android:layout_width="104dp"
+        android:layout_height="36dp"
+        android:text="Connect"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.613"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.209" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="162dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/listView" />
+
+    <TextView
+        android:id="@+id/textViewBLEActivity"
+        android:layout_width="352dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="20dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.488"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/listView" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

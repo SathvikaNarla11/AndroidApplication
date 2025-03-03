@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     Toolbar toolbar;
     private static final int BLUETOOTH_REQUEST_CODE = 1;
 
+    private static final int REQUEST_CODE = 1;
+
     String humidityData;
 
     @Override
@@ -138,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
     private void exeButton() {
         cntBtn.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, BLEActivity.class);
-            startActivityForResult(intent, BLUETOOTH_REQUEST_CODE); // Expecting a result
+            startActivityForResult(intent, REQUEST_CODE); // Expecting a result
         });
     }
 
@@ -163,27 +165,69 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == BLUETOOTH_REQUEST_CODE && resultCode == RESULT_OK) {
+//            boolean isBluetoothConnected = data.getBooleanExtra("BLUETOOTH_STATE", false);
+//            if (isBluetoothConnected) {
+//                Toast.makeText(this, "Bluetooth is connected!", Toast.LENGTH_SHORT).show();
+//            } else {
+//                Toast.makeText(this, "Bluetooth is not connected!", Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//    }
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    Log.d("MainActivity", "onActivityResult Triggered");
 
-        if (requestCode == BLUETOOTH_REQUEST_CODE && resultCode == RESULT_OK) {
-            boolean isBluetoothOn = data.getBooleanExtra("BLUETOOTH_STATE", false);
-            if (isBluetoothOn) {
-                cntBtn.setBackgroundColor(Color.parseColor("#0288D1"));
-                autoBtn.setEnabled(true);
-                manualBtn.setEnabled(true);
+    if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+        Log.d("MainActivity", "Valid requestCode & resultCode");
+        if (data != null && data.hasExtra("RECEIVED_MESSAGE")) {
+            String receivedMessage = data.getStringExtra("RECEIVED_MESSAGE");
 
-                humidityData = databaseHelper.getHumidityData();
-                dataTextView.setText(humidityData);
-                processReceivedData(humidityData);
-
+            if (receivedMessage == null || receivedMessage.isEmpty()) {
+                Log.e("MainActivity", "Received message is NULL or EMPTY");
             } else {
-                cntBtn.setBackgroundColor(Color.RED);
+                Log.d("MainActivity", "Received Message: " + receivedMessage);
+                dataTextView.setText("haha " + receivedMessage); // Update TextView
+                Toast.makeText(this, "Message from BLE: " + receivedMessage, Toast.LENGTH_SHORT).show();
             }
         }
+        else {
+            Log.e("MainActivity", "No extra data found in intent");
+        }
     }
+    else {
+        Log.e("MainActivity", "Invalid requestCode or resultCode");
+    }
+}
+
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//
+//        if (requestCode == BLUETOOTH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+//            boolean isBluetoothConnected = data.getBooleanExtra("BLUETOOTH_STATE", false);
+//            if (data.hasExtra("RECEIVED_MESSAGE")) {
+//                String receivedMessage = data.getStringExtra("RECEIVED_MESSAGE");
+//                // Update TextView only when a new message is received
+//                if (receivedMessage != null && !receivedMessage.isEmpty()) {
+//                    dataTextView.setText("haha " + receivedMessage);
+//                }
+//                Toast.makeText(this, "Message from BLE: " + receivedMessage, Toast.LENGTH_SHORT).show();
+//            } else {
+//                Toast.makeText(this, isBluetoothConnected ? "Bluetooth is connected!" : "Bluetooth is not connected!", Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//    }
+
+
+
+
 
 }
 

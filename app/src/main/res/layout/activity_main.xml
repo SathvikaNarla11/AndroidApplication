@@ -7,6 +7,20 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/dataTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border_background"
+        android:text="TextView"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/toolbar"
+        app:layout_constraintVertical_bias="1.0" />
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -23,6 +37,7 @@
         tools:visibility="visible" />
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="376dp"
         android:layout_height="627dp"
         android:background="@drawable/main_background"
@@ -65,7 +80,7 @@
                 android:text="AUTOMATIC"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:cornerRadius="2sp"/>
+                app:cornerRadius="2sp" />
 
             <Button
                 android:id="@+id/btnManual"
@@ -120,8 +135,8 @@
                     android:layout_width="0dp"
                     android:layout_height="30dp"
                     android:layout_gravity="top"
-                    android:layout_weight="1"
                     android:layout_marginTop="5dp"
+                    android:layout_weight="1"
                     android:contentDescription="Image"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_launcher_foreground" />
@@ -162,9 +177,9 @@
                     android:layout_width="0dp"
                     android:layout_height="30dp"
                     android:layout_gravity="top"
+                    android:layout_marginTop="5dp"
                     android:layout_weight="1"
                     android:contentDescription="Image"
-                    android:layout_marginTop="5dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_launcher_foreground" />
 
@@ -204,9 +219,9 @@
                     android:layout_width="0dp"
                     android:layout_height="30dp"
                     android:layout_gravity="top"
+                    android:layout_marginTop="5dp"
                     android:layout_weight="1"
                     android:contentDescription="Image"
-                    android:layout_marginTop="5dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_launcher_foreground" />
 
@@ -322,15 +337,15 @@
             </LinearLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/dataTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/border_background"
-            android:padding="10dp"
-            android:text="TextView"
-            android:textSize="20dp" />
+        <!--        <TextView-->
+        <!--            android:id="@+id/dataTextView"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_marginTop="12dp"-->
+        <!--            android:background="@drawable/border_background"-->
+        <!--            android:padding="10dp"-->
+        <!--            android:text="TextView"-->
+        <!--            android:textSize="20dp" />-->
 
 
     </LinearLayout>
