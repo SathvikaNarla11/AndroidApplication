@@ -23,7 +23,6 @@ public class ScanBluetoothActivity extends AppCompatActivity
     BluetoothAdapter myBluetoothAdapter;
     // Initialize Bluetooth Adapter
 
-
     Intent btEnablingIntent;
 
     ActivityResultLauncher<Intent> enableBluetoothLauncher = registerForActivityResult(

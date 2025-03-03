@@ -112,11 +112,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void exeButton() {
-
         cntBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, ScanBluetoothActivity.class);
+            Intent intent = new Intent(MainActivity.this, BLEActivity.class);
             startActivityForResult(intent, BLUETOOTH_REQUEST_CODE); // Expecting a result
         });
     }
