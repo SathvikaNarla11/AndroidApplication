@@ -68,10 +68,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             int ledStatus = cursor.getInt(5);
             int mode = cursor.getInt(6);
 
-            // Format Data
-//            dataString = mist + ", " + temperature + "°C, " + humidity + " Rh, " +
-//                    "Fan: " + fanStatus + ", Mist: " + mistStatus +
-//                    ", LED: " + ledStatus + ", Mode: " + mode;
             dataString = mist+","+temperature+","+humidity+","+fanStatus+","+mistStatus+","+ledStatus+","+mode;
         }
         cursor.close();
@@ -93,11 +89,62 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return mode;
     }
 
+    // Get Fan Status
+    public boolean getFanStatus() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT fan_status FROM " + TABLE_NAME + " LIMIT 1", null);
+        boolean fanStatus = false;
+
+        if (cursor.moveToFirst()) {
+            fanStatus = cursor.getInt(0) == 1; // Convert 1 -> true, 0 -> false
+        }
+        cursor.close();
+        db.close();
+        return fanStatus;
+    }
+
+    // Get Mist Status
+    public boolean getMistStatus() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT mist_status FROM " + TABLE_NAME + " LIMIT 1", null);
+        boolean mistStatus = false;
+
+        if (cursor.moveToFirst()) {
+            mistStatus = cursor.getInt(0) == 1;
+        }
+        cursor.close();
+        db.close();
+        return mistStatus;
+    }
+
+    // Get LED Status
+    public boolean getLedStatus() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT led_status FROM " + TABLE_NAME + " LIMIT 1", null);
+        boolean ledStatus = false;
+
+        if (cursor.moveToFirst()) {
+            ledStatus = cursor.getInt(0) == 1;
+        }
+        cursor.close();
+        db.close();
+        return ledStatus;
+    }
+
     // Update Mode in Database
     public void updateMode(int newMode) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("mode", newMode);
+        db.update(TABLE_NAME, values, null, null);
+        db.close();
+    }
+
+    public void updateFanStatus(int newMode)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("fan_status", newMode);
         db.update(TABLE_NAME, values, null, null);
         db.close();
     }
