@@ -50,7 +50,7 @@ public class BLEActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_LOCATION = 101;
 
     Button buttonBack,ConnectDevice ,disconnectDevice, startScanningButton, stopScanningButton;
-    TextView DeviceText, displayMSG;
+    TextView DeviceText, displayMSG, tvBLEActivity;
     ListView deviceListView;
     BluetoothAdapter btAdapter;
     BluetoothDevice hc05Device;
@@ -94,6 +94,7 @@ public class BLEActivity extends AppCompatActivity {
         deviceListView = findViewById(R.id.listView);
         buttonBack = findViewById(R.id.btnBack);
         displayMSG = findViewById(R.id.textViewBLEActivity);
+        tvBLEActivity = findViewById(R.id.textViewBLEActivity);
 
         // Initialize Bluetooth
         btManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
@@ -119,7 +120,6 @@ public class BLEActivity extends AppCompatActivity {
 //        // Handle Back Button
         buttonBack.setOnClickListener(v -> {
             Intent returnIntent = new Intent();
-//            returnIntent.putExtra("BLUETOOTH_STATE", (bluetoothSocket != null && bluetoothSocket.isConnected()));
             returnIntent.putExtra("RECEIVED_MESSAGE", finalMessage);
 
             Log.d("BLEActivity", "Sending result: " + finalMessage); // Debugging log
@@ -176,50 +176,47 @@ public class BLEActivity extends AppCompatActivity {
         setResult(RESULT_OK, returnIntent);
     }
 
-    private void startListeningForData() {
-        new Thread(() -> {
-            try {
-                InputStream inputStream = bluetoothSocket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+private void startListeningForData() {
+    new Thread(() -> {
+        try {
+            InputStream inputStream = bluetoothSocket.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-                while (bluetoothSocket.isConnected()) { // Loop while connected
-                    String receivedMessage;
+            while (bluetoothSocket.isConnected()) { // Keep listening while connected
+                if (inputStream.available() > 0) { // Check if data is available
+                    String receivedMessage = reader.readLine(); // Read the message
 
-                    if (reader.ready()) { // Check if there's data to read
-                        receivedMessage = reader.readLine(); // Read data
-                        if (receivedMessage != null && !receivedMessage.isEmpty()) {
-                            finalMessage = receivedMessage; // Update the message
+                    if (receivedMessage != null && !receivedMessage.isEmpty()) {
+                        finalMessage = receivedMessage; // Store the latest message globally
 
-                            runOnUiThread(() -> {
-                                Toast.makeText(BLEActivity.this, "Received: " + finalMessage, Toast.LENGTH_SHORT).show();
-
-                            });
+                        runOnUiThread(() -> {
+                            // Ensure UI updates
+                            Toast.makeText(BLEActivity.this, "Received: " + finalMessage, Toast.LENGTH_SHORT).show();
                             displayMSG.setText("MSG : " + finalMessage);
-                            // Send Data to MainActivity
-                            Intent returnIntent = new Intent();
-                            returnIntent.putExtra("RECEIVED_MESSAGE", finalMessage);
+                            tvBLEActivity.setText("FINAL MESSAGE : " + finalMessage);
+                        });
 
-                            setResult(RESULT_OK, returnIntent);
-                        }
-                    } else {
-                        displayMSG.setText("NO MSG");
-//                        runOnUiThread(() ->
-////                                Toast.makeText(BLEActivity.this, "NO MSG RECEIVED", Toast.LENGTH_SHORT).show()
-//                        );
-////                        Thread.sleep(2000); // Wait 2 seconds before checking again
+                        // Send Data to MainActivity
+                        Intent returnIntent = new Intent();
+                        returnIntent.putExtra("RECEIVED_MESSAGE", finalMessage);
+                        setResult(RESULT_OK, returnIntent);
                     }
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                runOnUiThread(() ->
-                        Toast.makeText(BLEActivity.this, "Bluetooth Disconnected", Toast.LENGTH_LONG).show()
-                );
+                Thread.sleep(500); // Add a delay to prevent fast looping
             }
-        }).start();
-    }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            runOnUiThread(() ->
+                    Toast.makeText(BLEActivity.this, "Bluetooth Disconnected", Toast.LENGTH_LONG).show()
+            );
+        }
+    }).start();
+}
 
-    // Call this when back button is pressed (or after receiving a message)
+
+
+
+//     Call this when back button is pressed (or after receiving a message)
 //    @Override
 //    public void onBackPressed() {
 //        setResult(RESULT_OK, new Intent().putExtra("RECEIVED_MESSAGE", finalMessage));
