@@ -337,6 +337,14 @@
             </LinearLayout>
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/textViewTimestamp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TextView"
+            android:textAlignment="center"
+            android:textSize="24sp" />
+
         <!--        <TextView-->
         <!--            android:id="@+id/dataTextView"-->
         <!--            android:layout_width="match_parent"-->

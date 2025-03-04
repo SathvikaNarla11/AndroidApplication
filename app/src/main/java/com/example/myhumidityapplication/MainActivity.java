@@ -1,6 +1,7 @@
 package com.example.myhumidityapplication;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,29 +23,45 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import kotlinx.coroutines.channels.ChannelSegment;
+
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_CODE = 1;
+    private BluetoothSocket bluetoothSocket;
+    private InputStream inputStream;
+    private static final int REQUEST_BLE_ACTIVITY = 1;
+    private volatile String latestMessage = "";
 
     Button cntBtn, autoBtn, manualBtn, fanStatusBtn, mistStatusBtn, ledStatusBtn;
     ImageView fanImgStatus, mistImgStatus, ledImgStatus;
-    TextView dataTextView, tempValueTV, humidityValueTV;
+    TextView dataTextView, tempValueTV, humidityValueTV, displayMSG, timeStampDisplay;
     DatabaseHelper databaseHelper;
     BluetoothAdapter bluetoothAdapter;
-    BroadcastReceiver bluetoothReceiver;
     Toolbar toolbar;
-    private static final int BLUETOOTH_REQUEST_CODE = 1;
+    private OutputStream bluetoothOutputStream;
 
-    private static final int REQUEST_CODE = 1;
+    boolean fan, led, mist;
+    private boolean autoMode = false; // Default to Manual Mode
 
-    String humidityData;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
         cntBtn = findViewById(R.id.btnConnect);
-        dataTextView = findViewById(R.id.dataTextView);
+        displayMSG = findViewById(R.id.dataTextView);
         autoBtn = findViewById(R.id.btnAutomatic);
         manualBtn = findViewById(R.id.btnManual);
         fanStatusBtn = findViewById(R.id.btnFan);
@@ -55,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
         fanImgStatus = findViewById(R.id.imageViewFan);
         mistImgStatus = findViewById(R.id.imageViewMist);
         ledImgStatus = findViewById(R.id.imageViewLed);
+        timeStampDisplay = findViewById(R.id.textViewTimestamp);
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         autoBtn.setEnabled(false);
         manualBtn.setEnabled(false);
@@ -62,196 +83,234 @@ public class MainActivity extends AppCompatActivity {
         mistStatusBtn.setEnabled(false);
         ledStatusBtn.setEnabled(false);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
+
+        // Open BLEActivity for scanning & connection
+        cntBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, BLEActivity.class);
+            startActivityForResult(intent, REQUEST_BLE_ACTIVITY);
         });
 
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        databaseHelper = new DatabaseHelper(this);
-        int mode = databaseHelper.getMode();
-        boolean fanStatusDB = databaseHelper.getFanStatus();
-        boolean mistStatusDB = databaseHelper.getMistStatus();
-        boolean ledStatusDB = databaseHelper.getLedStatus();
-        updateUI(mode, fanStatusDB, mistStatusDB, ledStatusDB);
-
+        // Handle Button Clicks for Switching Modes
         autoBtn.setOnClickListener(v -> {
-            databaseHelper.updateMode(1); // Set mode to Auto in database
-            processReceivedData(databaseHelper.getHumidityData()); // Fetch latest data & update UI
+            sendCommandToDevice("1"); // Send command to switch to Auto Mode
+
         });
 
         manualBtn.setOnClickListener(v -> {
-            databaseHelper.updateMode(0); // Set mode to Manual in database
-            processReceivedData(databaseHelper.getHumidityData()); // Fetch latest data & update UI
+            sendCommandToDevice("2"); // Send command to switch to Manual Mode
         });
 
         fanStatusBtn.setOnClickListener(v -> {
-            boolean currentFanStatus = databaseHelper.getFanStatus(); // Get latest status
-            databaseHelper.updateFanStatus(currentFanStatus ? 0 : 1); // Toggle and update
-            processReceivedData(databaseHelper.getHumidityData()); // Refresh UI
+            String status = fanStatusBtn.getText().toString();
+            boolean isFanOn = status.equals("ON");
+            sendCommandToDevice(isFanOn ? "4" : "3");
+            Toast.makeText(getApplicationContext(), "Button Clicked: " + status, Toast.LENGTH_SHORT).show();
         });
 
-        exeButton();
+        ledStatusBtn.setOnClickListener(v -> {
+            String status = ledStatusBtn.getText().toString();
+            if(status.equals("ON"))
+            {
+                sendCommandToDevice("8");
+            }
+            else{
+                sendCommandToDevice("7");
+            }
+            Toast.makeText(getApplicationContext(), "Button Clicked: " + status, Toast.LENGTH_SHORT).show();
+        });
+
+        mistStatusBtn.setOnClickListener(v -> {
+            String status = mistStatusBtn.getText().toString();
+            if(status.equals("ON"))
+            {
+                sendCommandToDevice("6");
+            }
+            else{
+                sendCommandToDevice("5");
+            }
+            Toast.makeText(getApplicationContext(), "Button Clicked: " + status, Toast.LENGTH_SHORT).show();
+        });
     }
 
-    private void updateUI(int mode, boolean fanStatus, boolean mistStatus, boolean ledStatus) {
-        if (mode == 1) { // Automatic Mode
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_BLE_ACTIVITY && resultCode == RESULT_OK) {
+            boolean deviceConnected = data.getBooleanExtra("DEVICE_CONNECTED", false);
+            if (deviceConnected) {
+
+                bluetoothSocket = BLEActivity.bluetoothSocket; // Get Bluetooth socket from BLEActivity
+                initializeBluetoothOutputStream();
+
+                //Enable buttons
+                autoBtn.setEnabled(true);
+                manualBtn.setEnabled(true);
+
+                startListeningForData();
+            }
+        }
+    }
+
+    private void startListeningForData() {
+        new Thread(() -> {
+            try {
+                InputStream inputStream = BLEActivity.getBluetoothSocket().getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                while (true) {  // Keep listening
+                    String receivedMessage = reader.readLine();
+                    if (receivedMessage != null && !receivedMessage.isEmpty()) {
+                        latestMessage = receivedMessage;
+                        runOnUiThread(() -> {
+                            processReceivedMessage(receivedMessage);
+//                            displayMSG.setText("MSG: " + receivedMessage);
+                        });
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+    private void processReceivedMessage(String message) {
+        displayMSG.setText("MSG in processRec: " + message); // Update UI
+        // Get the current time
+        String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        // Extract Auto/Manual Mode (Last Value)
+        String[] dataParts = message.split(",");
+        if (dataParts.length == 7) {
+
+            String temperature = dataParts[1].trim();
+            String humidity = dataParts[2].trim();
+            boolean fanStatus = dataParts[3].trim().equals("1");
+            boolean mistStatus = dataParts[4].trim().equals("1");
+            boolean ledStatus = dataParts[5].trim().equals("1");
+            boolean isAutoMode = dataParts[6].trim().equals("1");
+
+            fan = fanStatus;
+            led = ledStatus;
+            mist = mistStatus;
+
+            timeStampDisplay.setText(currentTime);
+            tempValueTV.setText(temperature);
+            humidityValueTV.setText(humidity);
+
+            // Handle Mode Switching
+            if (isAutoMode) {
+                setAutoMode();
+            } else {
+                setManualMode(fanStatus, mistStatus, ledStatus);
+            }
+        }
+    }
+
+    // Function to enable Auto Mode
+    private void setAutoMode() {
+        runOnUiThread(() -> {
             autoBtn.setBackgroundColor(Color.GREEN);
             manualBtn.setBackgroundColor(Color.GRAY);
 
+            // Disable fan, mist, and led buttons
             fanStatusBtn.setEnabled(false);
             mistStatusBtn.setEnabled(false);
             ledStatusBtn.setEnabled(false);
 
-            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
-            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
-            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
-
-            Toast.makeText(MainActivity.this, "AUTOMATIC MODE ON", Toast.LENGTH_SHORT).show();
-
-        } else { // Manual Mode
-            autoBtn.setBackgroundColor(Color.GRAY);
-            manualBtn.setBackgroundColor(Color.GREEN);
-
-            fanStatusBtn.setEnabled(true);
-            mistStatusBtn.setEnabled(true);
-            ledStatusBtn.setEnabled(true);
-
-            fanStatusBtn.setBackgroundColor(fanStatus ? Color.GREEN : Color.RED);
-            fanStatusBtn.setText(fanStatus ? "ON" : "OFF");
-            fanImgStatus.setImageResource(fanStatus ? R.drawable.on_button: R.drawable.off_button );
-//
-            mistStatusBtn.setBackgroundColor(mistStatus ? Color.GREEN : Color.RED);
-            mistStatusBtn.setText(mistStatus ? "ON" : "OFF");
-            mistImgStatus.setImageResource(mistStatus ? R.drawable.on_button : R.drawable.off_button );
-//
-            ledStatusBtn.setBackgroundColor(ledStatus ? Color.GREEN : Color.RED);
-            ledStatusBtn.setText(ledStatus ? "ON" : "OFF");
-            ledImgStatus.setImageResource(ledStatus ? R.drawable.on_button : R.drawable.off_button );
-
-            Toast.makeText(MainActivity.this, "MANUAL MODE ON", Toast.LENGTH_SHORT).show();
-
-        }
-    }
-
-    private void exeButton() {
-        cntBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, BLEActivity.class);
-            startActivityForResult(intent, REQUEST_CODE); // Expecting a result
+            updateButtonStateAutomatic(fanStatusBtn);
+            updateButtonStateAutomatic(mistStatusBtn);
+            updateButtonStateAutomatic(ledStatusBtn);
         });
     }
 
-    private void processReceivedData(String data) {
-        if (data.startsWith("$MIST")) {
-            String[] parts = data.split(",");
-            if (parts.length == 7) {
+    // Function to enable Manual Mode
+    private void setManualMode(boolean fanStatus, boolean mistStatus, boolean ledStatus) {
+        runOnUiThread(() -> {
+        autoBtn.setBackgroundColor(Color.GRAY);
+        manualBtn.setBackgroundColor(Color.GREEN);
 
-                String temperature = parts[1].trim();
-                String humidity = parts[2].trim();
-                boolean fanStatus = parts[3].trim().equals("1");
-                boolean mistStatus = parts[4].trim().equals("1");
-                boolean ledStatus = parts[5].trim().equals("1");
-//                boolean isAutoMode = parts[6].trim().equals("1");
+        // Enable fan, mist, and led buttons
+        fanStatusBtn.setEnabled(true);
+        mistStatusBtn.setEnabled(true);
+        ledStatusBtn.setEnabled(true);
 
-                int mode = Integer.parseInt(parts[6].trim()); // Extract mode from last value
+        // Update button states based on received values
+            updateButtonStateManual(fanStatusBtn, fanStatus);
+            updateButtonStateManual(mistStatusBtn, mistStatus);
+            updateButtonStateManual(ledStatusBtn, ledStatus);
 
-                runOnUiThread(() -> {
-                    updateUI(mode, fanStatus, mistStatus, ledStatus); // Call updateUI to set button enable/disable
-                });
-            }
+
+
+        });
+    }
+
+    // Function to update button text and color
+    private void updateButtonStateManual(Button button, boolean isOn) {
+        if (isOn) {
+            button.setText("ON");
+            button.setBackgroundColor(Color.GREEN);
+        } else {
+            button.setText("OFF");
+            button.setBackgroundColor(Color.RED);
         }
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == BLUETOOTH_REQUEST_CODE && resultCode == RESULT_OK) {
-//            boolean isBluetoothConnected = data.getBooleanExtra("BLUETOOTH_STATE", false);
-//            if (isBluetoothConnected) {
-//                Toast.makeText(this, "Bluetooth is connected!", Toast.LENGTH_SHORT).show();
-//            } else {
-//                Toast.makeText(this, "Bluetooth is not connected!", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-@Override
-protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
+    private void updateButtonStateAutomatic(Button button) {
 
-    Log.d("MainActivity", "onActivityResult Triggered");
+            button.setBackgroundColor(Color.GRAY);
 
-    if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-        Log.d("MainActivity", "Valid requestCode & resultCode");
-        if (data != null && data.hasExtra("RECEIVED_MESSAGE")) {
-            String receivedMessage = data.getStringExtra("RECEIVED_MESSAGE");
+    }
 
-            if (receivedMessage == null || receivedMessage.isEmpty()) {
-                Log.e("MainActivity", "Received message is NULL or EMPTY");
+    private void sendCommandToDevice(String command) {
+        if (bluetoothSocket != null && bluetoothSocket.isConnected()) {
+            if (bluetoothOutputStream != null) {
+                try {
+                    bluetoothOutputStream.write(command.getBytes());
+                    bluetoothOutputStream.flush();
+                    Toast.makeText(this, "Sent: " + command, Toast.LENGTH_SHORT).show();
+                } catch (IOException e) {
+                    Toast.makeText(this, "Send Failed", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                }
             } else {
-                Log.d("MainActivity", "Received Message: " + receivedMessage);
-                dataTextView.setText("haha " + receivedMessage); // Update TextView
-                Toast.makeText(this, "Message from BLE: " + receivedMessage, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "OutputStream is NULL!", Toast.LENGTH_SHORT).show();
             }
-        }
-        else {
-            Log.e("MainActivity", "No extra data found in intent");
+        } else {
+            Toast.makeText(this, "Bluetooth Not Connected!", Toast.LENGTH_SHORT).show();
         }
     }
-    else {
-        Log.e("MainActivity", "Invalid requestCode or resultCode");
-    }
-}
 
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//        if (requestCode == BLUETOOTH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-//            boolean isBluetoothConnected = data.getBooleanExtra("BLUETOOTH_STATE", false);
-//            if (data.hasExtra("RECEIVED_MESSAGE")) {
-//                String receivedMessage = data.getStringExtra("RECEIVED_MESSAGE");
-//                // Update TextView only when a new message is received
-//                if (receivedMessage != null && !receivedMessage.isEmpty()) {
-//                    dataTextView.setText("haha " + receivedMessage);
+    // Function to send command to Bluetooth device
+//    private void sendCommandToDevice(String command) {
+//        if (bluetoothSocket != null) {
+//            Toast.makeText(this, "NOT NULL", Toast.LENGTH_SHORT).show();
+//            if (bluetoothOutputStream != null) {
+//                try {
+//                    Toast.makeText(this, "UPDATED IN PACKET", Toast.LENGTH_SHORT).show();
+//                    bluetoothOutputStream.write((command).getBytes());
+//                    bluetoothOutputStream.flush();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
 //                }
-//                Toast.makeText(this, "Message from BLE: " + receivedMessage, Toast.LENGTH_SHORT).show();
-//            } else {
-//                Toast.makeText(this, isBluetoothConnected ? "Bluetooth is connected!" : "Bluetooth is not connected!", Toast.LENGTH_SHORT).show();
 //            }
+//            else {
+//                Toast.makeText(this, "NOT UPDATED IN PACKET", Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//        else {
+//            Toast.makeText(this, "NULL", Toast.LENGTH_SHORT).show();
 //        }
 //    }
 
-
-
-
+    private void initializeBluetoothOutputStream() {
+        if (bluetoothSocket != null) {
+            try {
+                bluetoothOutputStream = bluetoothSocket.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }
-
-
-
-
-//         Initialize Bluetooth Receiver
-//        bluetoothReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-//                if (state == BluetoothAdapter.STATE_ON) {
-//                    cntBtn.setBackgroundColor(Color.GREEN);
-//                    Toast.makeText(getApplicationContext(), "Bluetooth is ON. btnAutomatic Enabled!", Toast.LENGTH_SHORT).show();
-//                } else if (state == BluetoothAdapter.STATE_OFF) {
-//                    cntBtn.setBackgroundColor(Color.RED);
-//                Toast.makeText(getApplicationContext(), "Turn ON Bluetooth to enable automatic mode!", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    };
-//
-//    // Register the Receiver
-//    IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-//    registerReceiver(bluetoothReceiver, filter);
-
-
 
