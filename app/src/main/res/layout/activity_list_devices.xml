@@ -20,36 +20,8 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <TextView
-        android:id="@+id/txtDevice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:text="Your Devices"
-        android:layout_marginLeft="8dp"
-        android:textSize="24sp"
-        tools:ignore="MissingConstraints"
-        android:visibility="visible"/>
 
-
-    <TextView
-        android:id="@+id/tvConnectDevice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txtDevice"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="8dp"
-        android:textAlignment="center"
-        android:text="Pair Device:"
-        android:textSize="20sp"
-        android:visibility="visible"
-        />
-
-
-<!--    <Button-->
+    <!--    <Button-->
 <!--        android:id="@+id/ConnectDevice"-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->
@@ -57,56 +29,13 @@
 <!--        tools:layout_editor_absoluteX="204dp"-->
 <!--        tools:layout_editor_absoluteY="132dp" />-->
 
-    <TextView
-        android:id="@+id/AvailableDevice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="516dp"
-        android:text="Available Device:"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.065"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connectDevice" />
-
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:text="Scan"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
         android:id="@+id/StartScanButton"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="5dp"
-        android:visibility="visible"
-        />
-
-    <Button
-        android:id="@+id/disconnectDevice"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:layout_marginTop="44dp"
-        android:layout_marginEnd="112dp"
-        android:text=" Disconnect "
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
-
-    <Button
-        android:id="@+id/StopScanButton"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
+        android:layout_width="112dp"
+        android:layout_height="53dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="104dp"
-        android:text=" Stop Scanning "
+        android:layout_marginEnd="28dp"
+        android:text="Scan"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
         android:visibility="visible"
@@ -115,54 +44,30 @@
 
     <ListView
         android:id="@+id/listView"
-        android:layout_width="383dp"
-        android:layout_height="350dp"
+        android:layout_width="369dp"
+        android:layout_height="488dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="200dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.428"
+        app:layout_constraintHorizontal_bias="0.333"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"></ListView>
+        app:layout_constraintTop_toTopOf="@+id/toolbar"
+        app:layout_constraintVertical_bias="0.588"></ListView>
 
     <Button
         android:id="@+id/btnBack"
-        android:layout_width="64dp"
-        android:layout_height="41dp"
+        android:layout_width="60dp"
+        android:layout_height="57dp"
         android:text="B"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.916"
+        app:layout_constraintHorizontal_bias="0.06"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.168" />
-
-    <Button
-        android:id="@+id/connectDeviceBtn"
-        android:layout_width="104dp"
-        android:layout_height="36dp"
-        android:text="Connect"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.613"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.209" />
-
-    <TextView
-        android:id="@+id/textViewBLEActivity"
-        android:layout_width="352dp"
-        android:layout_height="38dp"
-        android:layout_marginTop="20dp"
-        android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.488"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/listView" />
+        app:layout_constraintVertical_bias="0.106" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

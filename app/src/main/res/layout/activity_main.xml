@@ -339,11 +339,14 @@
 
         <TextView
             android:id="@+id/textViewTimestamp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView"
-            android:textAlignment="center"
-            android:textSize="24sp" />
+            android:layout_width="337dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/border_background"
+            android:padding="10dp"
+            android:text="Date and Time"
+            android:textAlignment="viewStart"
+            android:textSize="14sp" />
 
         <!--        <TextView-->
         <!--            android:id="@+id/dataTextView"-->

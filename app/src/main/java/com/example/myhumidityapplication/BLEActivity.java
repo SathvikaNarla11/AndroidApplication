@@ -87,14 +87,15 @@ public class BLEActivity extends AppCompatActivity {
 
 
         buttonBack = findViewById(R.id.btnBack);
-        ConnectDevice = findViewById(R.id.connectDeviceBtn);
-        disconnectDevice = findViewById(R.id.disconnectDevice);
+//        ConnectDevice = findViewById(R.id.connectDeviceBtn);
+//        disconnectDevice = findViewById(R.id.disconnectDevice);
         startScanningButton = findViewById(R.id.StartScanButton);
-        stopScanningButton = findViewById(R.id.StopScanButton);
-        DeviceText = findViewById(R.id.txtDevice);
-        displayMSG = findViewById(R.id.textViewBLEActivity);
-        tvBLEActivity = findViewById(R.id.textViewBLEActivity);
+//        stopScanningButton = findViewById(R.id.StopScanButton);
+//        DeviceText = findViewById(R.id.txtDevice);
+//        displayMSG = findViewById(R.id.textViewBLEActivity);
+//        tvBLEActivity = findViewById(R.id.textViewBLEActivity);
         deviceListView = findViewById(R.id.listView);
+
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
 

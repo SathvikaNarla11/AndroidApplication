@@ -2,26 +2,16 @@ package com.example.myhumidityapplication;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,8 +21,6 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import kotlinx.coroutines.channels.ChannelSegment;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 1;
@@ -51,9 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     boolean fan, led, mist;
     private boolean autoMode = false; // Default to Manual Mode
-
-
-
+    ImageView fanImg, ledImg, mistImg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,9 +56,12 @@ public class MainActivity extends AppCompatActivity {
         tempValueTV = findViewById(R.id.tempValue);
         humidityValueTV = findViewById(R.id.humidityValue);
         fanImgStatus = findViewById(R.id.imageViewFan);
-        mistImgStatus = findViewById(R.id.imageViewMist);
+        mistImgStatus = findViewById(R.id.imageViewFan);
         ledImgStatus = findViewById(R.id.imageViewLed);
         timeStampDisplay = findViewById(R.id.textViewTimestamp);
+        fanImg = findViewById(R.id.imageViewFan);
+        mistImg = findViewById(R.id.imageViewMist);
+        ledImg = findViewById(R.id.imageViewLed);
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -93,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         // Handle Button Clicks for Switching Modes
         autoBtn.setOnClickListener(v -> {
             sendCommandToDevice("1"); // Send command to switch to Auto Mode
-
         });
 
         manualBtn.setOnClickListener(v -> {
@@ -103,7 +91,13 @@ public class MainActivity extends AppCompatActivity {
         fanStatusBtn.setOnClickListener(v -> {
             String status = fanStatusBtn.getText().toString();
             boolean isFanOn = status.equals("ON");
-            sendCommandToDevice(isFanOn ? "4" : "3");
+            if(status.equals("ON"))
+            {
+                sendCommandToDevice("4");
+            }
+            else {
+                sendCommandToDevice("3");
+            }
             Toast.makeText(getApplicationContext(), "Button Clicked: " + status, Toast.LENGTH_SHORT).show();
         });
 
@@ -175,7 +169,11 @@ public class MainActivity extends AppCompatActivity {
     private void processReceivedMessage(String message) {
         displayMSG.setText("MSG in processRec: " + message); // Update UI
         // Get the current time
+        String currentDate = new SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(new Date());
         String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+
+
+
 
         // Extract Auto/Manual Mode (Last Value)
         String[] dataParts = message.split(",");
@@ -192,7 +190,8 @@ public class MainActivity extends AppCompatActivity {
             led = ledStatus;
             mist = mistStatus;
 
-            timeStampDisplay.setText(currentTime);
+            // Set text with a new line
+            timeStampDisplay.setText("Date : "+ currentDate +"\n Time : " + currentTime);
             tempValueTV.setText(temperature);
             humidityValueTV.setText(humidity);
 
@@ -234,20 +233,18 @@ public class MainActivity extends AppCompatActivity {
         ledStatusBtn.setEnabled(true);
 
         // Update button states based on received values
-            updateButtonStateManual(fanStatusBtn, fanStatus);
-            updateButtonStateManual(mistStatusBtn, mistStatus);
-            updateButtonStateManual(ledStatusBtn, ledStatus);
-
-
-
+            updateButtonStateManual(fanStatusBtn, fanStatus, fanImg);
+            updateButtonStateManual(mistStatusBtn, mistStatus, mistImg);
+            updateButtonStateManual(ledStatusBtn, ledStatus, ledImg);
         });
     }
 
     // Function to update button text and color
-    private void updateButtonStateManual(Button button, boolean isOn) {
+    private void updateButtonStateManual(Button button, boolean isOn, ImageView img) {
         if (isOn) {
             button.setText("ON");
             button.setBackgroundColor(Color.GREEN);
+
         } else {
             button.setText("OFF");
             button.setBackgroundColor(Color.RED);
@@ -279,29 +276,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    // Function to send command to Bluetooth device
-//    private void sendCommandToDevice(String command) {
-//        if (bluetoothSocket != null) {
-//            Toast.makeText(this, "NOT NULL", Toast.LENGTH_SHORT).show();
-//            if (bluetoothOutputStream != null) {
-//                try {
-//                    Toast.makeText(this, "UPDATED IN PACKET", Toast.LENGTH_SHORT).show();
-//                    bluetoothOutputStream.write((command).getBytes());
-//                    bluetoothOutputStream.flush();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            else {
-//                Toast.makeText(this, "NOT UPDATED IN PACKET", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//        else {
-//            Toast.makeText(this, "NULL", Toast.LENGTH_SHORT).show();
-//        }
-//    }
-
     private void initializeBluetoothOutputStream() {
         if (bluetoothSocket != null) {
             try {
@@ -311,6 +285,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 }
 
